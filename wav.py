@@ -1,23 +1,44 @@
+from filter_base import FilterBase
 from viz_base import VizBase
 import numpy as np
 from scipy.io import wavfile
 
 
 class WAV:
-    def __init__(self, data: np.ndarray, sample_rate: int):
-        # 入力検証
-        if data.ndim != 1:
-            raise ValueError(
-                f"1次元配列のみ対応しています（渡された配列: {data.ndim}次元）"
-            )
-
+    def __init__(self, sample_rate: int):
         if sample_rate <= 0:
             raise ValueError(
                 f"サンプルレートは正の値である必要があります（渡された値: {sample_rate}）"
             )
 
-        self.data = data
         self.sample_rate = sample_rate
+
+        self.filters: list[FilterBase] = []
+        self.data: np.ndarray = None
+
+    def add_filter(self, filter: FilterBase) -> "WAV":
+        """
+        WAVデータにフィルタを追加する
+
+        Args:
+            filter: FilterBaseを継承したフィルタのインスタンス
+        """
+        self.filters.append(filter)
+        return self
+
+    def add_data(self, data: np.ndarray) -> "WAV":
+        """
+        WAVデータを追加し、登録されたフィルタを順に適用する
+
+        Args:
+            data: 1次元numpy配列（-1.0〜1.0のfloat or int16）
+        """
+        # フィルタを順に適用
+        for filter in self.filters:
+            data = filter.apply(data, self.sample_rate)
+
+        self.data = data
+        return self
 
     def save(self, filename: str):
         """
@@ -49,4 +70,3 @@ class WAV:
             visualizer: VizBaseを継承したビジュアライザのインスタンス
         """
         visualizer.render(self.data, self.sample_rate)
-

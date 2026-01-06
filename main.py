@@ -1,6 +1,8 @@
+from delta_sigma_modulator import DeltaSigmaModulator
+from lowpass_filter import LowpassFilter
+from pwm_filter import PWMFilter
 from wav import WAV
 from viz_plot import VizPlot
-from pwm import PWM
 import numpy as np
 
 
@@ -17,7 +19,7 @@ def main():
 
     # WAVファイルとして保存
     output_file = "output.wav"
-    wav = WAV(data=audio_data, sample_rate=sample_rate)
+    wav = WAV(sample_rate=sample_rate).add_data(audio_data)
     wav.save(output_file)
     print(f"WAVファイルを保存: {output_file}")
 
@@ -27,7 +29,8 @@ def main():
 
     # PWM変換のデモ
     print("\nPWM変換のデモ")
-    pwm = PWM(data=audio_data, sample_rate=sample_rate)
+    pwm_filter = DeltaSigmaModulator()
+    pwm = WAV(sample_rate=sample_rate).add_filter(pwm_filter).add_data(audio_data)
     pwm_output_file = "output_pwm.wav"
     pwm.save(pwm_output_file)
     print(f"PWMファイルを保存: {pwm_output_file}")
@@ -35,6 +38,21 @@ def main():
     # PWM波形の可視化
     print("PWM波形を表示...")
     pwm.visualize(VizPlot())
+
+    # ローパスフィルタ適用のデモ
+    print("\nローパスフィルタ適用のデモ")
+    lowpass_filter = LowpassFilter(cutoff_frequency=1000.0)
+    lowpasss = (
+        WAV(sample_rate=sample_rate)
+        .add_filter(pwm_filter)
+        .add_filter(lowpass_filter)
+        .add_data(audio_data)
+    )
+    lowpass_output_file = "output_pwm_lowpass.wav"
+    lowpasss.save(lowpass_output_file)
+    print(f"ローパスフィルタ適用後のPWMファイルを保存: {lowpass_output_file}")
+    print("ローパスフィルタ適用後のPWM波形を表示...")
+    lowpasss.visualize(VizPlot())
 
 
 if __name__ == "__main__":

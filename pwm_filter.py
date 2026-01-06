@@ -1,13 +1,13 @@
-from wav import WAV
+from filter_base import FilterBase
 import numpy as np
 
 
-class PWM(WAV):
-    def __init__(self, data: np.ndarray, sample_rate: int, sample_length: int = 16):
-        pwm_data = self._to_pwm(data, sample_length)
-        super().__init__(pwm_data, sample_rate)
+class PWMFilter(FilterBase):
+    def __init__(self, sample_length: int = 16):
+        self.sample_length = sample_length
+        super().__init__()
 
-    def _to_pwm(self, data: np.ndarray, sample_length: int) -> np.ndarray:
+    def apply(self, data: np.ndarray, sample_rate: int) -> np.ndarray:
         """
         numpy配列をPWM信号に変換する（単純な比較ベース PWM）
 
@@ -31,7 +31,7 @@ class PWM(WAV):
         normalized_data = np.clip(normalized_data, -1.0, 1.0)
 
         # のこぎり波キャリア信号を生成（-1.0〜1.0の範囲）
-        carrier_rate = max(1, len(data) // sample_length)
+        carrier_rate = max(1, len(data) // self.sample_length)
         t = np.arange(len(data))
         carrier = 2.0 * (t % carrier_rate) / carrier_rate - 1.0
 
@@ -39,14 +39,3 @@ class PWM(WAV):
         pwm_signal = np.where(normalized_data > carrier, 1.0, -1.0)
 
         return pwm_signal
-
-    def save(self, filename: str):
-        """
-        numpy配列をPWM WAVファイルとして保存する
-
-        Args:
-            filename: 出力ファイルパス
-        """
-
-        # 親クラスのsaveメソッドを呼び出して保存
-        super().save(filename)
